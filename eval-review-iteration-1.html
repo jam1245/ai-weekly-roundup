@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eval Review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #faf9f5;
+      --surface: #ffffff;
+      --border: #e8e6dc;
+      --text: #141413;
+      --text-muted: #b0aea5;
+      --accent: #d97757;
+      --accent-hover: #c4613f;
+      --green: #788c5d;
+      --green-bg: #eef2e8;
+      --red: #c44;
+      --red-bg: #fceaea;
+      --header-bg: #141413;
+      --header-text: #faf9f5;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .header .instructions {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-top: 0.25rem;
+    }
+    .header .progress {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      text-align: right;
+    }
+
+    /* ---- Main content ---- */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ---- Sections ---- */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      flex-shrink: 0;
+    }
+    .section-header {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .section-body {
+      padding: 1rem;
+    }
+
+    /* ---- Config badge ---- */
+    .config-badge {
+      display: inline-block;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-left: 0.75rem;
+      vertical-align: middle;
+    }
+    .config-badge.config-primary {
+      background: rgba(33, 150, 243, 0.12);
+      color: #1976d2;
+    }
+    .config-badge.config-baseline {
+      background: rgba(255, 193, 7, 0.15);
+      color: #f57f17;
+    }
+
+    /* ---- Prompt ---- */
+    .prompt-text {
+      white-space: pre-wrap;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    /* ---- Outputs ---- */
+    .output-file {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .output-file + .output-file {
+      margin-top: 1rem;
+    }
+    .output-file-header {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .output-file-header .dl-btn {
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-decoration: none;
+      cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+    .output-file-header .dl-btn:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+    .output-file-content {
+      padding: 0.75rem;
+      overflow-x: auto;
+    }
+    .output-file-content pre {
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+    .output-file-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .output-file-content iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+    }
+    .output-file-content table {
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      width: 100%;
+    }
+    .output-file-content table td,
+    .output-file-content table th {
+      border: 1px solid var(--border);
+      padding: 0.375rem 0.5rem;
+      text-align: left;
+    }
+    .output-file-content table th {
+      background: var(--bg);
+      font-weight: 600;
+    }
+    .output-file-content .download-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    .output-file-content .download-link:hover {
+      background: var(--border);
+    }
+    .empty-state {
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* ---- Feedback ---- */
+    .prev-feedback {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.625rem 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .prev-feedback-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+      color: var(--text-muted);
+    }
+    .feedback-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: var(--text);
+    }
+    .feedback-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .feedback-status {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      min-height: 1.1em;
+    }
+
+    /* ---- Grades (collapsible) ---- */
+    .grades-toggle {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .grades-toggle:hover {
+      color: var(--accent);
+    }
+    .grades-toggle .arrow {
+      margin-right: 0.5rem;
+      transition: transform 0.15s;
+      font-size: 0.75rem;
+    }
+    .grades-toggle .arrow.open {
+      transform: rotate(90deg);
+    }
+    .grades-content {
+      display: none;
+      margin-top: 0.75rem;
+    }
+    .grades-content.open {
+      display: block;
+    }
+    .grades-summary {
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .grade-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .grade-pass { background: var(--green-bg); color: var(--green); }
+    .grade-fail { background: var(--red-bg); color: var(--red); }
+    .assertion-list {
+      list-style: none;
+    }
+    .assertion-item {
+      padding: 0.625rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8125rem;
+    }
+    .assertion-item:last-child { border-bottom: none; }
+    .assertion-status {
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    .assertion-status.pass { color: var(--green); }
+    .assertion-status.fail { color: var(--red); }
+    .assertion-evidence {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      padding-left: 1.5rem;
+    }
+
+    /* ---- View tabs ---- */
+    .view-tabs {
+      display: flex;
+      gap: 0;
+      padding: 0 2rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .view-tab {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .view-panel { display: none; }
+    .view-panel.active { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+    /* ---- Benchmark view ---- */
+    .benchmark-view {
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .benchmark-table {
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+    .benchmark-table th, .benchmark-table td {
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+    .benchmark-table th {
+      font-family: 'Poppins', sans-serif;
+      background: var(--header-bg);
+      color: var(--header-text);
+      font-weight: 500;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .benchmark-table tr:hover { background: var(--bg); }
+    .benchmark-table tr.benchmark-row-with { background: rgba(33, 150, 243, 0.06); }
+    .benchmark-table tr.benchmark-row-without { background: rgba(255, 193, 7, 0.06); }
+    .benchmark-table tr.benchmark-row-with:hover { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-without:hover { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-table tr.benchmark-row-avg { font-weight: 600; border-top: 2px solid var(--border); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-with { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-without { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-delta-positive { color: var(--green); font-weight: 600; }
+    .benchmark-delta-negative { color: var(--red); font-weight: 600; }
+    .benchmark-notes {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .benchmark-notes h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+    .benchmark-notes ul {
+      list-style: disc;
+      padding-left: 1.25rem;
+    }
+    .benchmark-notes li {
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      margin-bottom: 0.375rem;
+    }
+    .benchmark-empty {
+      color: var(--text-muted);
+      font-style: italic;
+      text-align: center;
+      padding: 3rem;
+    }
+
+    /* ---- Navigation ---- */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .done-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .done-btn:hover {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .done-btn.ready {
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+    .done-btn.ready:hover {
+      background: var(--accent-hover);
+    }
+    /* ---- Done overlay ---- */
+    .done-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .done-overlay.visible {
+      display: flex;
+    }
+    .done-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 2rem 3rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+    }
+    .done-card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .done-card p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    .done-card .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    .done-card button {
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .done-card button:hover {
+      background: var(--bg);
+    }
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 200;
+    }
+    .toast.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" style="height:100vh; display:flex; flex-direction:column;">
+    <div class="header">
+      <div>
+        <h1>Eval Review: <span id="skill-name"></span></h1>
+        <div class="instructions">Review each output and leave feedback below. Navigate with arrow keys or buttons. When done, copy feedback and paste into Claude Code.</div>
+      </div>
+      <div class="progress" id="progress"></div>
+    </div>
+
+    <!-- View tabs (only shown when benchmark data exists) -->
+    <div class="view-tabs" id="view-tabs" style="display:none;">
+      <button class="view-tab active" onclick="switchView('outputs')">Outputs</button>
+      <button class="view-tab" onclick="switchView('benchmark')">Benchmark</button>
+    </div>
+
+    <!-- Outputs panel (qualitative review) -->
+    <div class="view-panel active" id="panel-outputs">
+    <div class="main">
+      <!-- Prompt -->
+      <div class="section">
+        <div class="section-header">Prompt <span class="config-badge" id="config-badge" style="display:none;"></span></div>
+        <div class="section-body">
+          <div class="prompt-text" id="prompt-text"></div>
+        </div>
+      </div>
+
+      <!-- Outputs -->
+      <div class="section">
+        <div class="section-header">Output</div>
+        <div class="section-body" id="outputs-body">
+          <div class="empty-state">No output files found</div>
+        </div>
+      </div>
+
+      <!-- Previous Output (collapsible) -->
+      <div class="section" id="prev-outputs-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="togglePrevOutputs()">
+            <span class="arrow" id="prev-outputs-arrow">&#9654;</span>
+            Previous Output
+          </div>
+        </div>
+        <div class="grades-content" id="prev-outputs-content"></div>
+      </div>
+
+      <!-- Grades (collapsible) -->
+      <div class="section" id="grades-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="toggleGrades()">
+            <span class="arrow" id="grades-arrow">&#9654;</span>
+            Formal Grades
+          </div>
+        </div>
+        <div class="grades-content" id="grades-content"></div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="section">
+        <div class="section-header">Your Feedback</div>
+        <div class="section-body">
+          <textarea
+            class="feedback-textarea"
+            id="feedback"
+            placeholder="What do you think of this output? Any issues, suggestions, or things that look great?"
+          ></textarea>
+          <div class="feedback-status" id="feedback-status"></div>
+          <div class="prev-feedback" id="prev-feedback" style="display:none;">
+            <div class="prev-feedback-label">Previous feedback</div>
+            <div id="prev-feedback-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav" id="outputs-nav">
+      <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">&#8592; Previous</button>
+      <button class="done-btn" id="done-btn" onclick="showDoneDialog()">Submit All Reviews</button>
+      <button class="nav-btn" id="next-btn" onclick="navigate(1)">Next &#8594;</button>
+    </div>
+    </div><!-- end panel-outputs -->
+
+    <!-- Benchmark panel (quantitative stats) -->
+    <div class="view-panel" id="panel-benchmark">
+      <div class="benchmark-view" id="benchmark-content">
+        <div class="benchmark-empty">No benchmark data available. Run a benchmark to see quantitative results here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Done overlay -->
+  <div class="done-overlay" id="done-overlay">
+    <div class="done-card">
+      <h2>Review Complete</h2>
+      <p>Your feedback has been saved. Go back to your Claude Code session and tell Claude you're done reviewing.</p>
+      <div class="btn-row">
+        <button onclick="closeDoneDialog()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ---- Embedded data (injected by generate_review.py) ----
+    const EMBEDDED_DATA = {"skill_name": "ai-roundup-formatting", "runs": [{"id": "eval-0-with_skill", "prompt": "Write this week's AI roundup for my Lockheed Martin team (Gemini 2.5, Accenture $3B, Physical Intelligence $400M). Week of April 14, 2025.", "eval_id": 0, "outputs": [{"name": "roundup.md", "type": "text", "content": "AI Weekly Roundup \u2013 Week of April 14, 2025\n\nThe real signal this week is not any single model or investment announcement \u2014 it's that AI capability is simultaneously accelerating at the frontier and moving into physical-world execution. The question for every large organization is no longer \"when do we adopt AI?\" but \"how fast can we build the operational muscle to use it?\"\n\n---\n\n1. Gemini 2.5 Pro Is Not a Model Update \u2014 It's a Reasoning Architecture Shift\nCoverage: Google DeepMind\n\nGoogle DeepMind released Gemini 2.5 Pro this week, claiming top benchmark performance across math and coding. More significant than the raw scores: the model introduces a \"deep think\" mode that enables extended reasoning chains \u2014 letting the system deliberate before responding rather than generating output immediately.\n\nThis is not incremental improvement. Extended reasoning changes what AI systems can reliably do. Tasks that previously required human review loops \u2014 complex trade analysis, system-level design decisions, technical feasibility assessments \u2014 become candidates for AI-assisted first-pass reasoning at a quality level that wasn't credible six months ago.\n\nThe implication for large engineering and program organizations is structural. When AI can reason through multi-step technical problems \u2014 not just retrieve answers \u2014 the bottleneck shifts from \"can the AI do this?\" to \"do we have workflows designed to use the output?\" Most organizations don't yet.\n\nRelevance: For Lockheed Martin teams, the \"deep think\" capability is worth specific attention. Extended reasoning models are better suited to the kinds of problems engineers actually face \u2014 design tradeoffs, technical constraint analysis, requirements decomposition \u2014 than prior generations of models. The early advantage goes to teams that begin scoping where this reasoning quality genuinely changes the calculus on human review time.\n\n---\n\n2. Accenture's $3B AI Bet Signals That Enterprise Deployment Has Crossed a Threshold\nCoverage: Accenture\n\nAccenture announced a $3 billion investment in AI and a plan to double its AI workforce to 80,000 people. The deployment focus is not internal efficiency \u2014 it's agents embedded in client workflows across finance, HR, and supply chain functions.\n\nThis matters because Accenture is a leading indicator of enterprise adoption, not a first mover. A $3B commitment at this scale reflects demand they are already seeing from large clients, not a bet on future demand. The fact that agents \u2014 not just copilots \u2014 are the delivery vehicle signals that the market has crossed from AI-assisted work to AI-executed workflows.\n\nThe workforce implication is worth noting: 80,000 AI-focused practitioners at one firm represents a significant market signal about where talent is concentrating. Organizations that move slowly on internal capability building will find themselves competing for a shrinking pool of practitioners who understand both AI systems and enterprise operations.\n\nRelevance: Accenture is a major partner across defense and government programs. Their agent deployment posture \u2014 targeting finance, HR, and supply chain \u2014 maps directly onto functions that large defense contractors operate at scale. Understanding how those agents are being architected and governed is valuable both as a competitive benchmark and as a preview of what will be expected in program execution environments within 18\u201324 months.\n\n---\n\n3. Physical Intelligence's $400M Round Signals That General-Purpose Robotics Is No Longer Theoretical\nCoverage: Physical Intelligence (Pi)\n\nPhysical Intelligence raised $400 million to scale its foundation model for general-purpose robotics. The key technical claim: their model enables robots to learn new tasks from a small number of demonstrations \u2014 a handful of examples rather than months of reprogramming. The approach mirrors what language model pre-training did for text: build broad capability once, then adapt cheaply to specific tasks.\n\nThis is a meaningful threshold crossing. Industrial robotics has historically required extensive domain-specific programming for each task. A foundation model approach collapses that cycle. The economic and operational implications for manufacturing and logistics environments are significant \u2014 not because robots will replace workers immediately, but because the cost and time required to deploy and adapt robotic systems drops by an order of magnitude.\n\nThe deeper signal is convergence: AI reasoning capability (story one), enterprise workflow integration (story two), and AI-enabled physical systems (this story) are developing in parallel. Organizations in complex physical operations \u2014 aerospace manufacturing, sustainment, supply chain \u2014 are approaching a moment where these capabilities intersect.\n\nRelevance: Lockheed Martin operates sophisticated manufacturing and sustainment environments where task flexibility and adaptation speed are real operational constraints. The Physical Intelligence model \u2014 learn from demos, adapt quickly \u2014 is worth tracking specifically for applications in precision assembly, inspection, and maintenance workflows. The $400M investment scale also signals that competitors, suppliers, and customers are all evaluating this space seriously.\n\n---\n\nThe Strategic Picture\n\nThree stories this week, three different layers of the AI ecosystem \u2014 and they all point to the same underlying dynamic: AI is moving from capability demonstration to operational deployment, and the rate of that movement is accelerating faster than most enterprise planning cycles anticipated.\n\n- **The reasoning frontier is advancing ahead of organizational readiness.** Gemini 2.5 Pro's extended reasoning capability is not waiting for enterprises to catch up. The gap between what AI can now do and what most organizations have workflows to use is widening, not narrowing.\n\n- **Enterprise deployment at scale is not a future state \u2014 it is the current state for major players.** Accenture's 80,000-person AI workforce and agent deployment posture means the organizations shaping how AI gets embedded in enterprise functions are already building and shipping. The window for \"learning from others\" is compressing.\n\n- **AI is entering physical systems, not just information systems.** The Physical Intelligence raise marks a maturation point for robotics AI. Defense and aerospace organizations that think of AI primarily as a software or data problem will find this story requires a different kind of attention.\n\n- **The advantage is shifting from access to orchestration.** Every large organization can access frontier models. The differentiator is whether you have the processes, talent, and system architecture to turn that access into operational output.\n\nThe question worth bringing back to your teams: where in our program execution, engineering workflows, or operational functions are we the most dependent on slow human review cycles \u2014 and which of this week's signals changes that calculus?\n\n---\n\nLockheed Martin AI Community\n"}], "grading": null}, {"id": "eval-0-without_skill", "prompt": "Write this week's AI roundup for my Lockheed Martin team (Gemini 2.5, Accenture $3B, Physical Intelligence $400M). Week of April 14, 2025.", "eval_id": 0, "outputs": [{"name": "roundup.md", "type": "text", "content": "# Weekly AI Roundup \u2014 Week of April 14, 2025\n\n*Curated for the Lockheed Martin AI Community*\n\n---\n\n## 1. Google DeepMind Launches Gemini 2.5 Pro with \"Deep Think\" Reasoning Mode\n\nGoogle DeepMind released **Gemini 2.5 Pro** this week, its most capable model to date. According to Google, the model tops leading benchmarks in both mathematics and coding, surpassing competing frontier models across several standard evaluations.\n\nThe headline feature is a new **\"deep think\" mode**, which enables extended reasoning chains before the model produces a final answer \u2014 similar in spirit to OpenAI's o-series or Anthropic's extended thinking capability. This approach gives the model more time to work through complex, multi-step problems, which is particularly relevant for technical and scientific domains.\n\n**Why it matters for us:** Advanced reasoning models have direct implications for engineering analysis, systems design review, and software verification tasks. As these capabilities mature, the gap between \"AI assistant\" and \"AI collaborator on hard technical problems\" continues to narrow. Worth monitoring how Gemini 2.5 Pro performs on domain-specific tasks as independent benchmarks roll in.\n\n---\n\n## 2. Accenture Bets $3B on AI \u2014 Doubling Its AI Workforce to 80,000\n\nConsulting giant Accenture announced a **$3 billion investment in AI** along with plans to double its AI-focused headcount from roughly 40,000 to **80,000 people**. The investment is aimed at scaling AI agent deployments across client workflows, with an initial focus on **finance, HR, and supply chain** operations.\n\nAccenture's strategy centers on agentic AI \u2014 autonomous systems that don't just answer questions but take actions across enterprise workflows. This signals that large-scale enterprise AI adoption is moving from pilot programs to production deployments.\n\n**Why it matters for us:** Accenture is a major consulting and IT services partner across the defense and aerospace sector. Their aggressive buildout of AI agent expertise will shape how AI gets implemented across large organizations, including government contractors. Understanding their approach to agent deployment in finance and supply chain is directly relevant as we evaluate similar opportunities internally.\n\n---\n\n## 3. Physical Intelligence Raises $400M to Scale General-Purpose Robotics\n\n**Physical Intelligence (Pi)**, a robotics AI startup, closed a **$400 million funding round** to expand its general-purpose robotics foundation model. The company's core technology enables robots to learn new physical tasks from just a **handful of demonstrations**, dramatically reducing the time and effort previously required \u2014 which could run into months of manual reprogramming per task.\n\nPi's foundation model approach applies the same paradigm shift seen in language models to physical manipulation: instead of building task-specific controllers, train a single large model that generalizes across tasks and hardware.\n\n**Why it matters for us:** Robotics is a domain of direct strategic interest \u2014 from autonomous manufacturing and maintenance to logistics and potentially field operations. The ability for a robot to pick up a new task from a few demos rather than an extended engineering cycle changes the economics and feasibility of deploying robotics in dynamic, complex environments. This space is moving fast and deserves close attention.\n\n---\n\n## Quick Take\n\nThis week's stories share a common thread: **scale and generalization**. Gemini 2.5 Pro generalizes reasoning. Accenture scales AI deployment across enterprise functions. Physical Intelligence generalizes robotic manipulation. Across software and hardware, the industry is making a clear bet that large, general-purpose models will outcompete narrow, task-specific solutions. The question for teams like ours is where that bet pays off in our specific operational context \u2014 and where specialized, domain-tuned approaches still win.\n\n---\n\n*Have a story for next week's roundup or want to discuss any of these developments? Drop a comment or reach out directly.*\n"}], "grading": null}, {"id": "eval-1-with_skill", "prompt": "Write up the AI roundup (OpenAI autonomous agents, Microsoft Copilot on-device, McKinsey procurement study). Week of April 14, 2025. Keep it tight.", "eval_id": 1, "outputs": [{"name": "roundup.md", "type": "text", "content": "AI Weekly Roundup \u2013 Week of April 14, 2025\n\nThe common thread this week isn't any single announcement \u2014 it's the steady transfer of decision-making authority from humans to AI systems, moving through enterprise software, physical devices, and business operations simultaneously. The question is no longer whether organizations will adopt autonomous AI. It's whether they're architecting for it deliberately or discovering the gap after the fact.\n\n---\n\n1. OpenAI's Operator API Marks a Shift from Tools to Agents\nCoverage: OpenAI\n\nOpenAI released operator-level API access enabling AI agents to browse the web, write and run code, and take actions in external applications \u2014 without human confirmation at each step. This isn't a chatbot upgrade. It's an execution layer.\n\nThe significance is architectural. Previous AI integrations required a human in the loop to confirm, correct, and advance. This removes that dependency, enabling AI to sequence multi-step tasks across systems autonomously. The agent doesn't answer questions \u2014 it completes workflows.\n\nFor large organizations, this introduces a new class of capability: systems that act, not just recommend. That distinction matters for program management, compliance, and risk. Who is responsible when an autonomous agent takes an action in an external system? That governance question is not resolved yet \u2014 and enterprises that deploy ahead of that answer will find out the hard way.\n\nRelevance: Complex, multi-system environments \u2014 supply chains, program offices, engineering workflows \u2014 are exactly the context where autonomous agents deliver leverage. But they're also where an unconstrained agent can create consequential errors at machine speed. Early architecture decisions about agent scope, access controls, and audit trails will define the risk profile for years.\n\n---\n\n2. Microsoft Embeds Copilot Across Surface Hardware with On-Device AI\nCoverage: Microsoft\n\nMicrosoft announced that Copilot is now embedded natively in every Surface device, with on-device processing that operates without cloud connectivity. The capability is in the hardware \u2014 not dependent on a network call.\n\nThis matters because it decouples AI availability from infrastructure. Cloud-dependent AI has a fundamental constraint: it fails or degrades in disconnected, contested, or latency-sensitive environments. On-device processing eliminates that dependency for a wide range of use cases.\n\nThe move also signals where the hardware-software integration race is heading. AI is becoming a baseline device capability \u2014 like a camera or GPS \u2014 not an application you connect to. Microsoft is betting that the next competitive frontier isn't model performance. It's availability and integration at the edge.\n\nRelevance: For organizations operating in environments where cloud connectivity is unreliable, restricted, or adversarially contested, on-device AI changes the calculus significantly. Field operations, remote program execution, and security-sensitive workflows are all candidates for re-evaluation. The question is less \"can we get AI there?\" and more \"which tasks should run local vs. cloud, and why?\"\n\n---\n\n3. McKinsey Data: AI-Driven Procurement Cuts Costs 15\u201320%, Cycle Times by 30%\nCoverage: McKinsey\n\nA McKinsey study published this week found that organizations deploying AI in procurement are achieving 15\u201320% cost reductions and 30% faster cycle times. The largest gains come from demand forecasting and supplier risk analysis \u2014 not process automation.\n\nThat last point is underappreciated. The popular narrative frames AI procurement value around automating routine tasks. McKinsey's data points to something different: the biggest gains come from analytical tasks that were previously done slowly, inconsistently, or not at all. Demand forecasting and supplier risk are judgment-intensive activities. AI isn't replacing clerks here \u2014 it's augmenting analysts.\n\nThirty percent faster cycle times in procurement compounds. Faster sourcing decisions shorten program timelines. Better demand forecasting reduces inventory exposure. Supplier risk analysis surfaced earlier changes the nature of program risk management. These aren't efficiency gains \u2014 they're structural advantages that accumulate.\n\nRelevance: Large-scale programs with complex supplier ecosystems and long procurement cycles are exactly where these gains are most pronounced. A 30% reduction in procurement cycle time at scale isn't an incremental improvement \u2014 it changes what's schedulable. Organizations that treat this as a procurement problem will miss the program execution opportunity it represents.\n\n---\n\nThe Strategic Picture\n\nThree different announcements this week. Three different domains. The same underlying dynamic: AI is moving from assistive to autonomous, and the organizations setting the terms of that transition are doing so in infrastructure, not applications.\n\nOpenAI's operator API, Microsoft's on-device Copilot, and McKinsey's procurement data each reflect a different layer of the same shift:\n\n- **The execution layer is changing.** Agents that act without step-by-step human confirmation are no longer a research concept. They're a product. The question is how organizations bound them, govern them, and integrate them into workflows where accountability still matters.\n\n- **Infrastructure advantage is compounding.** On-device AI processing isn't about a single device \u2014 it's about what becomes possible when AI capability is available anywhere, regardless of connectivity. That's an infrastructure position, and it favors organizations that move early on edge deployment architecture.\n\n- **The biggest procurement gains aren't from automation \u2014 they're from analysis.** AI is delivering the most value in judgment-intensive work: forecasting, risk assessment, complex sourcing decisions. That's a signal about where AI augmentation has the highest leverage in complex program environments.\n\nThe pattern across all three: the advantage is shifting from organizations that use AI to those that architect around it. Experimentation is giving way to deployment, and deployment decisions made now \u2014 on scope, governance, and integration \u2014 will set the baseline for the next several years.\n\n---\n\nAI Community Weekly\n"}], "grading": null}, {"id": "eval-1-without_skill", "prompt": "Write up the AI roundup (OpenAI autonomous agents, Microsoft Copilot on-device, McKinsey procurement study). Week of April 14, 2025. Keep it tight.", "eval_id": 1, "outputs": [{"name": "roundup.md", "type": "text", "content": "# Weekly AI Roundup \u2014 April 14, 2025\n\n## OpenAI Opens the Door to Autonomous Agents\n\nOpenAI launched operator-level API access this week, giving developers the ability to build agents that can browse the web, write and execute code, and take actions inside external apps \u2014 all without requiring human sign-off at each step. The move signals a clear push toward agentic AI that operates independently rather than just responding to prompts, and puts more pressure on competitors to match the capability set.\n\n## Microsoft Bakes Copilot Directly into Surface Hardware\n\nMicrosoft announced that Copilot is now embedded across every Surface device, with on-device processing that keeps it running even when there's no internet connection. The offline capability is the notable part here \u2014 it removes one of the recurring friction points for enterprise adoption and positions Surface as a native AI-first hardware platform rather than a device that just connects to AI services in the cloud.\n\n## AI Delivers Measurable Procurement Wins, McKinsey Finds\n\nA new McKinsey study puts some hard numbers on AI's impact in procurement: companies deploying AI are seeing 15\u201320% cost reductions and 30% faster cycle times. The biggest gains are coming from demand forecasting and supplier risk analysis. The findings suggest that back-office and supply chain functions \u2014 often overlooked in early AI rollouts \u2014 are emerging as high-ROI targets for enterprise AI investment.\n"}], "grading": null}, {"id": "eval-2-with_skill", "prompt": "Write the weekly AI roundup (Meta Llama 4 open weights, NVIDIA $22.6B data center earnings, Shield AI USAF autonomous wingman contract). Week of April 14, 2025. For the Lockheed Martin AI community.", "eval_id": 2, "outputs": [{"name": "roundup.md", "type": "text", "content": "AI Weekly Roundup \u2013 Week of April 14, 2025\n\nThis week's signals converge on a single strategic dynamic: AI capability is no longer the bottleneck \u2014 infrastructure, supply chains, and deployment architecture are. The organizations that close that gap first will hold the advantage.\n\n---\n\n1. Meta's Llama 4 Resets the Open-Weights Playing Field\nCoverage: Meta AI Blog, The Verge, Ars Technica\n\nMeta released Llama 4 Scout and Maverick \u2014 open-weights models available for free download and self-hosted deployment. Both outperform GPT-4o on most standard benchmarks, with Maverick targeting complex reasoning tasks and Scout optimized for speed and efficiency at scale.\n\nThis is not an incremental release. It is a structural shift in who controls frontier AI. For years, leading capability meant proprietary access. That equation is changing. Organizations can now run benchmark-leading models on their own infrastructure, on their own networks, without API dependencies or data-sharing concerns.\n\nFor defense and enterprise contexts, the implications are significant. Open weights mean full auditability, air-gap deployability, and the ability to fine-tune models on sensitive domain data without routing it through a commercial vendor's cloud. That changes the calculus on what in-house AI programs can realistically deliver.\n\nRelevance: For Lockheed Martin, open-weight frontier models directly expand the design space for classified and program-sensitive AI applications. Systems that previously required commercial cloud connectivity \u2014 or were constrained to older, weaker models \u2014 can now run on-prem with competitive capability. This warrants a deliberate evaluation of where Llama 4 fits within existing and planned AI program architectures.\n\n---\n\n2. NVIDIA's Data Center Revenue: The Infrastructure Buildout Has No Ceiling in Sight\nCoverage: NVIDIA Q1 FY2026 Earnings, Reuters, Bloomberg\n\nNVIDIA reported $22.6 billion in data center revenue for a single quarter \u2014 a 400% year-over-year increase. CEO Jensen Huang stated plainly that demand from AI infrastructure investment is outpacing the company's ability to manufacture chips. The constraint is not demand. It is supply.\n\nThe real signal is not the revenue figure \u2014 it is what the demand pattern reveals. Every major hyperscaler, sovereign government, and large enterprise is simultaneously trying to build AI infrastructure. The result is a supply-constrained environment where compute access is a competitive variable, not a commodity.\n\nFor organizations that did not move early on compute strategy, that gap is widening. The companies and programs that secured GPU access, negotiated cloud capacity agreements, or invested in on-premise clusters are positioned differently than those still building the business case. This is not a temporary surge. It reflects a structural reorientation of global technology investment.\n\nRelevance: Lockheed Martin's AI infrastructure posture \u2014 whether on-premise, cloud-contracted, or hybrid \u2014 directly affects program execution timelines for any initiative that depends on model training, fine-tuning, or high-volume inference. The supply crunch also creates supplier risk across the defense industrial base. Understanding where key suppliers and teammates sit on the compute access spectrum is now a relevant program risk question.\n\n---\n\n3. The Air Force's Autonomous Wingman Contract Marks a Transition from Assisted to Independent AI\nCoverage: Defense News, Breaking Defense, Shield AI Press Release\n\nThe U.S. Air Force awarded Shield AI a contract for autonomous wingman drones capable of operating without GPS or communications links. These systems use fully edge-deployed AI to make tactical decisions independently \u2014 no connectivity required, no human in the loop for real-time maneuver decisions.\n\nThis is a threshold crossed. The contract validates a deployment model where AI is not assisting human decision-making \u2014 it is executing it, in contested environments, under adversarial conditions designed to deny the communications and positioning infrastructure that conventional systems depend on. That is a different category of AI deployment.\n\nThe technical requirements here are exacting: the AI must be reliable enough for kinetic decisions, resilient enough for denied environments, and compact enough for edge hardware on an airframe. Meeting those requirements while keeping models deployable without connectivity is the exact challenge that separates capable AI from operationally credible AI.\n\nRelevance: This contract is directly relevant to Lockheed Martin's autonomous systems programs, collaborative combat aircraft development, and broader mission systems architecture work. It signals that the customer is ready to accept AI-enabled autonomous operation in tactical scenarios \u2014 and that competitors and teammates are investing accordingly. The edge-deployed, comms-independent deployment pattern is one the broader enterprise should be stress-testing across applicable programs.\n\n---\n\nThe Strategic Picture\n\nThree stories. Three different layers of the AI stack. One underlying dynamic: the distance between AI capability and operational deployment is collapsing faster than most organizations have planned for.\n\nMeta's open-weight release removes the argument that frontier AI requires commercial cloud access. NVIDIA's earnings confirm that the organizations investing in infrastructure at scale are not waiting to see how this plays out \u2014 they are building the foundation now. And the Air Force contract demonstrates that the customer is already accepting AI in autonomous, high-stakes, connectivity-denied operational roles.\n\nThe convergence here is not subtle:\n\n- **The capability gap is closing, but the deployment gap is widening.** Frontier models are increasingly accessible. The differentiator is whether your organization can integrate, validate, and deploy them against real operational requirements \u2014 not whether you can access them.\n\n- **Infrastructure is the new moat.** Compute access, air-gap deployment capability, and the engineering talent to run models in secure environments are becoming strategic assets. Organizations that treated this as IT infrastructure planning are behind those who treated it as mission-critical investment.\n\n- **The autonomous threshold is here, not approaching.** The Air Force contract is not a research program or a pilot. It is an operational award for systems making tactical decisions without human connectivity. Programs across the enterprise should assess where their assumptions about human-machine teaming still reflect this operational reality.\n\nThe question for this community is not whether AI is strategically relevant to Lockheed Martin's mission. That question is settled. The question is whether the pace of internal capability building, infrastructure investment, and workforce development matches the pace at which customers, competitors, and the broader ecosystem are moving.\n\n---\n\nAI Community at Lockheed Martin\n"}], "grading": null}, {"id": "eval-2-without_skill", "prompt": "Write the weekly AI roundup (Meta Llama 4 open weights, NVIDIA $22.6B data center earnings, Shield AI USAF autonomous wingman contract). Week of April 14, 2025. For the Lockheed Martin AI community.", "eval_id": 2, "outputs": [{"name": "roundup.md", "type": "text", "content": "# Weekly AI Roundup \u2014 Week of April 14, 2025\n\n*Curated for the AI community at Lockheed Martin*\n\n---\n\n## 1. Meta Releases Llama 4: Open-Weight Models That Outperform GPT-4o\n\nMeta dropped two new open-weight foundation models this week \u2014 **Llama 4 Scout** and **Llama 4 Maverick** \u2014 and the benchmark numbers are turning heads. Both models outperform GPT-4o on the majority of standard evaluations, covering reasoning, coding, and multimodal tasks.\n\nWhat makes this significant for our community: these models are **free to download and deploy on your own infrastructure**. No API dependency, no data leaving your environment, no per-token costs at scale. For teams working in classified or air-gapped environments, open-weight models like these represent a meaningful path to integrating frontier-grade AI into sensitive workflows.\n\nScout is positioned as the leaner, faster option, while Maverick is the higher-capability flagship. Meta has continued its strategy of aggressive open release, and the competitive pressure this puts on proprietary vendors is real.\n\n**Why it matters for Lockheed Martin:** On-premise, air-gapped AI deployment is not a nice-to-have \u2014 it's often a requirement. Models at this capability level that can run on controlled hardware change the calculus for what's feasible in program-specific AI tooling.\n\n---\n\n## 2. NVIDIA Data Center Revenue Hits $22.6B in a Single Quarter \u2014 Up 400% YoY\n\nNVIDIA's latest earnings report underscores just how fast AI infrastructure spending is accelerating. **Data center revenue reached $22.6 billion** in the most recent quarter, a staggering 400% increase year over year. CEO Jensen Huang stated plainly that demand is outpacing their ability to manufacture chips.\n\nThe supply constraint is not just a talking point \u2014 it is actively shaping deployment timelines across the industry. Hyperscalers (Microsoft, Google, Amazon, Meta) are locked in a capacity arms race, and lead times on high-end GPU clusters remain extended. This has downstream effects on everyone building AI systems: model training timelines, cloud compute costs, and hardware procurement planning are all affected.\n\nFor defense contractors and aerospace companies building AI-enabled systems, the chip availability picture matters when planning program schedules that depend on GPU-accelerated development environments or edge inference hardware.\n\n**Why it matters for Lockheed Martin:** Hardware roadmap awareness is becoming a core competency for AI program planning. Understanding where the compute bottlenecks are \u2014 and aren't \u2014 helps teams make better build-vs-buy decisions and set realistic delivery schedules.\n\n---\n\n## 3. US Air Force Awards Shield AI Contract for Autonomous Wingman Drones\n\nThe US Air Force awarded a contract to **Shield AI** for autonomous wingman drones capable of operating without GPS or communications links. These aircraft use **fully edge-deployed AI** to make tactical decisions independently \u2014 no datalink, no human in the loop for moment-to-moment maneuvering.\n\nThis is a significant milestone for autonomous military aviation. The technical challenge here is substantial: the AI must handle real-time threat assessment, navigation, and coordination in contested electromagnetic environments where GPS spoofing or jamming is assumed. Shield AI's core technology, the Hivemind autonomy stack, is purpose-built for exactly this kind of degraded-environment operation.\n\nThis contract signals that the Air Force is moving beyond concept demonstrations toward fielded autonomous air combat capability. It also sets a precedent for how AI decision-making authority will be scoped and certified in manned-unmanned teaming scenarios.\n\n**Why it matters for Lockheed Martin:** This is our competitive and collaborative landscape in real time. Autonomous teaming, edge inference, and resilient AI in denied environments are active program areas across multiple platforms. The Shield AI contract is a proof point that the acquisition community is ready to fund and field this class of system \u2014 which raises the bar for what programs need to demonstrate.\n\n---\n\n## Looking Ahead\n\nThree themes connect this week's stories: **open and deployable AI** (Llama 4), **the infrastructure race driving it all** (NVIDIA earnings), and **autonomous systems moving from labs to contracts** (Shield AI). Each of these threads is relevant to how AI gets built, sourced, and fielded in defense contexts.\n\nMore next week.\n\n---\n\n*Weekly AI Roundup is distributed internally to the Lockheed Martin AI community.*\n"}], "grading": null}], "previous_feedback": {}, "previous_outputs": {}, "benchmark": {"metadata": {"skill_name": "ai-roundup-formatting", "skill_path": "<path/to/skill>", "executor_model": "<model-name>", "analyzer_model": "<model-name>", "timestamp": "2026-04-18T17:42:00Z", "evals_run": [0, 1, 2], "runs_per_configuration": 3}, "runs": [{"eval_id": 0, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 7, "failed": 0, "total": 7, "time_seconds": 47.4, "tokens": 13527, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Output contains a title line matching 'AI Weekly Roundup \u2013 Week of' with a date", "passed": true, "evidence": "The first line reads exactly: 'AI Weekly Roundup \u2013 Week of April 14, 2025', matching the required format with an em-dash and a date."}, {"text": "Opening includes a 1-2 sentence strategic synthesis or framing theme (not just a list of headlines)", "passed": true, "evidence": "The opening paragraph frames the week's signal as 'AI capability is simultaneously accelerating at the frontier and moving into physical-world execution' and poses a strategic question, offering genuine synthesis rather than a preview of headlines."}, {"text": "Output covers all three stories: Gemini 2.5 Pro, Accenture investment, and Physical Intelligence/robotics", "passed": true, "evidence": "Sections 1, 2, and 3 cover Gemini 2.5 Pro, Accenture's $3B investment, and Physical Intelligence's $400M round respectively."}, {"text": "Each story headline is framed as strategic insight, not a neutral news headline (e.g., not just 'Google Releases Gemini 2.5')", "passed": true, "evidence": "Headlines read 'Gemini 2.5 Pro Is Not a Model Update \u2014 It's a Reasoning Architecture Shift', 'Accenture's $3B Bet Signals That Enterprise Deployment Has Crossed a Threshold', and 'Physical Intelligence's $400M Round Signals That General-Purpose Robotics Is No Longer Theoretical' \u2014 all interpretive framing rather than neutral reporting."}, {"text": "Each story includes a 'Relevance:' section with 2-4 sentences connecting the story to an organizational/LM context", "passed": true, "evidence": "Each story ends with a 'Relevance:' paragraph explicitly labeled as such, each containing 3-4 sentences connecting the story to Lockheed Martin's specific operational and engineering context."}, {"text": "Output contains a 'The Strategic Picture' synthesis section connecting all stories", "passed": true, "evidence": "The section header 'The Strategic Picture' appears and explicitly connects all three stories, identifying a shared dynamic: 'AI is moving from capability demonstration to operational deployment.'"}, {"text": "Tone is executive and analytical throughout \u2014 not a casual blog post or bullet list dump", "passed": true, "evidence": "Throughout the output, prose is authoritative and analytical, e.g., 'This is not incremental improvement. Extended reasoning changes what AI systems can reliably do.' No casual phrasing or listicle-style delivery."}], "notes": []}, {"eval_id": 1, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 7, "failed": 0, "total": 7, "time_seconds": 42.8, "tokens": 13394, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Output contains a title line matching 'AI Weekly Roundup \u2013 Week of' with a date", "passed": true, "evidence": "The first line reads exactly: 'AI Weekly Roundup \u2013 Week of April 14, 2025', with the correct em-dash format and a date."}, {"text": "Opening includes a 1-2 sentence strategic synthesis framing the week's convergent theme", "passed": true, "evidence": "The opening states 'The common thread this week isn't any single announcement \u2014 it's the steady transfer of decision-making authority from humans to AI systems' and frames a strategic question, giving genuine thematic synthesis across the three stories."}, {"text": "Output covers all three stories: OpenAI agent API, Microsoft Copilot on-device, and McKinsey procurement study", "passed": true, "evidence": "Sections 1, 2, and 3 address OpenAI's operator API, Microsoft's on-device Copilot on Surface hardware, and McKinsey's procurement study with 15-20% cost reduction findings respectively."}, {"text": "Each story includes a 'Relevance:' section connecting to organizational context", "passed": true, "evidence": "Each story ends with a clearly labeled 'Relevance:' paragraph connecting the story to organizational priorities, e.g., for McKinsey: 'Large-scale programs with complex supplier ecosystems and long procurement cycles are exactly where these gains are most pronounced.'"}, {"text": "Output contains a 'The Strategic Picture' synthesis section", "passed": true, "evidence": "The section 'The Strategic Picture' appears and synthesizes all three stories under the framing that 'AI is moving from assistive to autonomous, and the organizations setting the terms of that transition are doing so in infrastructure, not applications.'"}, {"text": "Body paragraphs are tight (not long blocks of text) \u2014 no paragraph exceeds roughly 5 sentences", "passed": true, "evidence": "Scanning throughout, no body paragraph exceeds 5 sentences; most are 2-4 sentences, e.g., the McKinsey opening paragraph is 3 sentences and the OpenAI intro paragraph is 4 sentences."}, {"text": "Tone is executive and analytical, appropriate for a senior leader audience", "passed": true, "evidence": "The output consistently uses precise, authoritative language: 'This isn't a chatbot upgrade. It's an execution layer.' and 'Thirty percent faster cycle times in procurement compounds.' \u2014 no casual register or blog-style phrasing."}], "notes": []}, {"eval_id": 2, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 7, "failed": 0, "total": 7, "time_seconds": 47.6, "tokens": 13513, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Output contains a title line matching 'AI Weekly Roundup \u2013 Week of' with a date", "passed": true, "evidence": "The first line reads exactly: 'AI Weekly Roundup \u2013 Week of April 14, 2025', with the correct em-dash and date."}, {"text": "Opening includes a 1-2 sentence strategic synthesis, not just a preview of the three stories", "passed": true, "evidence": "The opening reads 'This week's signals converge on a single strategic dynamic: AI capability is no longer the bottleneck \u2014 infrastructure, supply chains, and deployment architecture are.' This is a genuine strategic synthesis, not a preview list."}, {"text": "Output covers all three stories: Meta Llama 4, NVIDIA earnings, and Shield AI/USAF contract", "passed": true, "evidence": "Sections 1, 2, and 3 cover Meta's Llama 4 Scout and Maverick release, NVIDIA's $22.6B data center revenue quarter, and the U.S. Air Force's autonomous wingman contract with Shield AI respectively."}, {"text": "Each story includes a 'Relevance:' section with organizational context", "passed": true, "evidence": "All three stories include a clearly labeled 'Relevance:' paragraph; for example, the NVIDIA section notes 'Lockheed Martin's AI infrastructure posture \u2014 whether on-premise, cloud-contracted, or hybrid \u2014 directly affects program execution timelines.'"}, {"text": "The Shield AI story's Relevance section makes a specific connection to Lockheed Martin's defense/autonomous systems work", "passed": true, "evidence": "The Shield AI Relevance section states 'This contract is directly relevant to Lockheed Martin's autonomous systems programs, collaborative combat aircraft development, and broader mission systems architecture work' \u2014 a specific and explicit connection."}, {"text": "Output contains a 'The Strategic Picture' synthesis section that finds a through-line across all three stories", "passed": true, "evidence": "'The Strategic Picture' section explicitly connects all three stories: 'Meta's open-weight release removes the argument that frontier AI requires commercial cloud access. NVIDIA's earnings confirm that the organizations investing in infrastructure at scale are not waiting... And the Air Force contract demonstrates that the customer is already accepting AI in autonomous... operational roles.'"}, {"text": "Tone is executive and analytical throughout", "passed": true, "evidence": "The output maintains a consistently authoritative register throughout, e.g., 'This is a threshold crossed.' and 'The question for this community is not whether AI is strategically relevant to Lockheed Martin's mission. That question is settled.' \u2014 precise, assertive, and appropriate for senior leadership."}], "notes": []}, {"eval_id": 0, "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.1429, "passed": 1, "failed": 6, "total": 7, "time_seconds": 32.6, "tokens": 10586, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Output contains a title line matching 'AI Weekly Roundup \u2013 Week of' with a date", "passed": false, "evidence": "The title reads '# Weekly AI Roundup \u2014 Week of April 14, 2025', using an en-dash instead of an em-dash and reversing 'AI' and 'Weekly', so it does not match the required format exactly."}, {"text": "Opening includes a 1-2 sentence strategic synthesis or framing theme (not just a list of headlines)", "passed": false, "evidence": "There is no opening synthesis paragraph; the output jumps directly from the title to the first story section '## 1. Google DeepMind Launches Gemini 2.5 Pro with \"Deep Think\" Reasoning Mode'."}, {"text": "Output covers all three stories: Gemini 2.5 Pro, Accenture investment, and Physical Intelligence/robotics", "passed": true, "evidence": "Sections 1, 2, and 3 cover Gemini 2.5 Pro, Accenture's $3B investment and workforce plan, and Physical Intelligence's $400M robotics funding round respectively."}, {"text": "Each story headline is framed as strategic insight, not a neutral news headline (e.g., not just 'Google Releases Gemini 2.5')", "passed": false, "evidence": "Headlines are neutral news summaries: 'Google DeepMind Launches Gemini 2.5 Pro with \"Deep Think\" Reasoning Mode', 'Accenture Bets $3B on AI \u2014 Doubling Its AI Workforce to 80,000', and 'Physical Intelligence Raises $400M to Scale General-Purpose Robotics' \u2014 none are framed as strategic insight."}, {"text": "Each story includes a 'Relevance:' section with 2-4 sentences connecting the story to an organizational/LM context", "passed": false, "evidence": "Each story includes a 'Why it matters for us:' or 'Why it matters for Lockheed Martin:' blurb, but none use the required 'Relevance:' label and most are only 2 sentences, which just barely meets the length requirement but fails on the formatting spec."}, {"text": "Output contains a 'The Strategic Picture' synthesis section connecting all stories", "passed": false, "evidence": "The output ends with a '## Quick Take' section rather than 'The Strategic Picture', offering a brief synthesis paragraph but not matching the required section header."}, {"text": "Tone is executive and analytical throughout \u2014 not a casual blog post or bullet list dump", "passed": false, "evidence": "The closing line 'Have a story for next week's roundup or want to discuss any of these developments? Drop a comment or reach out directly.' and the generally newsletter-casual register undercut the executive-analytical tone requirement."}], "notes": []}, {"eval_id": 1, "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.2857, "passed": 2, "failed": 5, "total": 7, "time_seconds": 19.1, "tokens": 9971, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Output contains a title line matching 'AI Weekly Roundup \u2013 Week of' with a date", "passed": false, "evidence": "The title reads '# Weekly AI Roundup \u2014 April 14, 2025', omitting 'Week of', using an en-dash instead of em-dash, and reversing 'AI Weekly' to 'Weekly AI' \u2014 it does not match the required format."}, {"text": "Opening includes a 1-2 sentence strategic synthesis framing the week's convergent theme", "passed": false, "evidence": "There is no opening synthesis paragraph; the output goes directly from the title to '## OpenAI Opens the Door to Autonomous Agents', the first story section."}, {"text": "Output covers all three stories: OpenAI agent API, Microsoft Copilot on-device, and McKinsey procurement study", "passed": true, "evidence": "The three sections cover OpenAI's operator-level API, Microsoft Copilot embedded on Surface hardware with on-device processing, and McKinsey's AI procurement study showing 15-20% cost reductions."}, {"text": "Each story includes a 'Relevance:' section connecting to organizational context", "passed": false, "evidence": "No story includes a 'Relevance:' section; there are no labeled relevance passages at all. The stories end after a brief 'why it matters' observation embedded in the body, without a dedicated section."}, {"text": "Output contains a 'The Strategic Picture' synthesis section", "passed": false, "evidence": "The output has no closing synthesis section of any kind; it ends abruptly after the third story with no summary, strategic picture, or closing framing."}, {"text": "Body paragraphs are tight (not long blocks of text) \u2014 no paragraph exceeds roughly 5 sentences", "passed": true, "evidence": "All paragraphs across the three stories are brief, mostly 2-3 sentences. No paragraph approaches 5 sentences, keeping the output compact throughout."}, {"text": "Tone is executive and analytical, appropriate for a senior leader audience", "passed": false, "evidence": "The output reads more like a newsletter digest than executive analysis. Phrases like 'The offline capability is the notable part here' and 'The findings suggest that back-office... functions \u2014 often overlooked in early AI rollouts \u2014 are emerging as high-ROI targets' are informative but lack the strategic depth and authority expected of senior-leader communications."}], "notes": []}, {"eval_id": 2, "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.2857, "passed": 2, "failed": 5, "total": 7, "time_seconds": 37.2, "tokens": 10880, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Output contains a title line matching 'AI Weekly Roundup \u2013 Week of' with a date", "passed": false, "evidence": "The title reads '# Weekly AI Roundup \u2014 Week of April 14, 2025', using an en-dash instead of em-dash and reversing 'AI Weekly' to 'Weekly AI', so it does not match the required exact format."}, {"text": "Opening includes a 1-2 sentence strategic synthesis, not just a preview of the three stories", "passed": false, "evidence": "There is no opening synthesis paragraph; the output goes directly from the title/subtitle to '## 1. Meta Releases Llama 4: Open-Weight Models That Outperform GPT-4o'."}, {"text": "Output covers all three stories: Meta Llama 4, NVIDIA earnings, and Shield AI/USAF contract", "passed": true, "evidence": "Sections 1, 2, and 3 cover Meta's Llama 4 Scout and Maverick, NVIDIA's $22.6B data center revenue quarter, and the US Air Force's Shield AI autonomous wingman drone contract respectively."}, {"text": "Each story includes a 'Relevance:' section with organizational context", "passed": false, "evidence": "No story uses the 'Relevance:' label. Each ends with a 'Why it matters for Lockheed Martin:' blurb, which provides organizational context but fails the formatting specification requiring the exact 'Relevance:' heading."}, {"text": "The Shield AI story's Relevance section makes a specific connection to Lockheed Martin's defense/autonomous systems work", "passed": true, "evidence": "The 'Why it matters for Lockheed Martin:' blurb for the Shield AI story states 'Autonomous teaming, edge inference, and resilient AI in denied environments are active program areas across multiple platforms' \u2014 a specific and relevant connection, even if not under the 'Relevance:' label."}, {"text": "Output contains a 'The Strategic Picture' synthesis section that finds a through-line across all three stories", "passed": false, "evidence": "The closing section is titled '## Looking Ahead' rather than 'The Strategic Picture'. It briefly names three themes but does not develop a substantive through-line analysis connecting the stories."}, {"text": "Tone is executive and analytical throughout", "passed": false, "evidence": "The output reads as a well-written internal newsletter but not consistently executive in register. The closing 'More next week.' and phrases like 'the benchmark numbers are turning heads' are casual rather than analytical. The tone is informative but not authoritative or strategically oriented."}], "notes": []}], "run_summary": {"with_skill": {"pass_rate": {"mean": 1.0, "stddev": 0.0, "min": 1.0, "max": 1.0}, "time_seconds": {"mean": 45.9333, "stddev": 2.7154, "min": 42.8, "max": 47.6}, "tokens": {"mean": 13478.0, "stddev": 73.0821, "min": 13394, "max": 13527}}, "without_skill": {"pass_rate": {"mean": 0.2381, "stddev": 0.0824, "min": 0.1429, "max": 0.2857}, "time_seconds": {"mean": 29.6333, "stddev": 9.4076, "min": 19.1, "max": 37.2}, "tokens": {"mean": 10479.0, "stddev": 463.8502, "min": 9971, "max": 10880}}, "delta": {"pass_rate": "+0.76", "time_seconds": "+16.3", "tokens": "+2999"}}, "notes": []}};
+
+    // ---- State ----
+    let feedbackMap = {};  // run_id -> feedback text
+    let currentIndex = 0;
+    let visitedRuns = new Set();
+
+    // ---- Init ----
+    async function init() {
+      // Load saved feedback from server — but only if this isn't a fresh
+      // iteration (indicated by previous_feedback being present). When
+      // previous feedback exists, the feedback.json on disk is stale from
+      // the prior iteration and should not pre-fill the textareas.
+      const hasPrevious = Object.keys(EMBEDDED_DATA.previous_feedback || {}).length > 0
+        || Object.keys(EMBEDDED_DATA.previous_outputs || {}).length > 0;
+      if (!hasPrevious) {
+        try {
+          const resp = await fetch("/api/feedback");
+          const data = await resp.json();
+          if (data.reviews) {
+            for (const r of data.reviews) feedbackMap[r.run_id] = r.feedback;
+          }
+        } catch { /* first run, no feedback yet */ }
+      }
+
+      document.getElementById("skill-name").textContent = EMBEDDED_DATA.skill_name;
+      showRun(0);
+
+      // Wire up feedback auto-save
+      const textarea = document.getElementById("feedback");
+      let saveTimeout = null;
+      textarea.addEventListener("input", () => {
+        clearTimeout(saveTimeout);
+        document.getElementById("feedback-status").textContent = "";
+        saveTimeout = setTimeout(() => saveCurrentFeedback(), 800);
+      });
+    }
+
+    // ---- Navigation ----
+    function navigate(delta) {
+      const newIndex = currentIndex + delta;
+      if (newIndex >= 0 && newIndex < EMBEDDED_DATA.runs.length) {
+        saveCurrentFeedback();
+        showRun(newIndex);
+      }
+    }
+
+    function updateNavButtons() {
+      document.getElementById("prev-btn").disabled = currentIndex === 0;
+      document.getElementById("next-btn").disabled =
+        currentIndex === EMBEDDED_DATA.runs.length - 1;
+    }
+
+    // ---- Show a run ----
+    function showRun(index) {
+      currentIndex = index;
+      const run = EMBEDDED_DATA.runs[index];
+
+      // Progress
+      document.getElementById("progress").textContent =
+        `${index + 1} of ${EMBEDDED_DATA.runs.length}`;
+
+      // Prompt
+      document.getElementById("prompt-text").textContent = run.prompt;
+
+      // Config badge
+      const badge = document.getElementById("config-badge");
+      const configMatch = run.id.match(/(with_skill|without_skill|new_skill|old_skill)/);
+      if (configMatch) {
+        const config = configMatch[1];
+        const isBaseline = config === "without_skill" || config === "old_skill";
+        badge.textContent = config.replace(/_/g, " ");
+        badge.className = "config-badge " + (isBaseline ? "config-baseline" : "config-primary");
+        badge.style.display = "inline-block";
+      } else {
+        badge.style.display = "none";
+      }
+
+      // Outputs
+      renderOutputs(run);
+
+      // Previous outputs
+      renderPrevOutputs(run);
+
+      // Grades
+      renderGrades(run);
+
+      // Previous feedback
+      const prevFb = (EMBEDDED_DATA.previous_feedback || {})[run.id];
+      const prevEl = document.getElementById("prev-feedback");
+      if (prevFb) {
+        document.getElementById("prev-feedback-text").textContent = prevFb;
+        prevEl.style.display = "block";
+      } else {
+        prevEl.style.display = "none";
+      }
+
+      // Feedback
+      document.getElementById("feedback").value = feedbackMap[run.id] || "";
+      document.getElementById("feedback-status").textContent = "";
+
+      updateNavButtons();
+
+      // Track visited runs and promote done button when all visited
+      visitedRuns.add(index);
+      const doneBtn = document.getElementById("done-btn");
+      if (visitedRuns.size >= EMBEDDED_DATA.runs.length) {
+        doneBtn.classList.add("ready");
+      }
+
+      // Scroll main content to top
+      document.querySelector(".main").scrollTop = 0;
+    }
+
+    // ---- Render outputs ----
+    function renderOutputs(run) {
+      const container = document.getElementById("outputs-body");
+      container.innerHTML = "";
+
+      const outputs = run.outputs || [];
+      if (outputs.length === 0) {
+        container.innerHTML = '<div class="empty-state">No output files</div>';
+        return;
+      }
+
+      for (const file of outputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        // Always show file header with download link
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const content = document.createElement("div");
+        content.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          content.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          content.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          content.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(content, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          content.appendChild(a);
+        } else if (file.type === "error") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          pre.style.color = "var(--red)";
+          content.appendChild(pre);
+        }
+
+        fileDiv.appendChild(content);
+        container.appendChild(fileDiv);
+      }
+    }
+
+    // ---- XLSX rendering via SheetJS ----
+    function renderXlsx(container, b64Data) {
+      try {
+        const raw = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
+        const wb = XLSX.read(raw, { type: "array" });
+
+        for (let i = 0; i < wb.SheetNames.length; i++) {
+          const sheetName = wb.SheetNames[i];
+          const ws = wb.Sheets[sheetName];
+
+          if (wb.SheetNames.length > 1) {
+            const sheetLabel = document.createElement("div");
+            sheetLabel.style.cssText =
+              "font-weight:600; font-size:0.8rem; color:#b0aea5; margin-top:0.5rem; margin-bottom:0.25rem;";
+            sheetLabel.textContent = "Sheet: " + sheetName;
+            container.appendChild(sheetLabel);
+          }
+
+          const htmlStr = XLSX.utils.sheet_to_html(ws, { editable: false });
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = htmlStr;
+          container.appendChild(wrapper);
+        }
+      } catch (err) {
+        container.textContent = "Error rendering spreadsheet: " + err.message;
+      }
+    }
+
+    // ---- Grades ----
+    function renderGrades(run) {
+      const section = document.getElementById("grades-section");
+      const content = document.getElementById("grades-content");
+
+      if (!run.grading) {
+        section.style.display = "none";
+        return;
+      }
+
+      const grading = run.grading;
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("grades-arrow").classList.remove("open");
+
+      const summary = grading.summary || {};
+      const expectations = grading.expectations || [];
+
+      let html = '<div style="padding: 1rem;">';
+
+      // Summary line
+      const passRate = summary.pass_rate != null
+        ? Math.round(summary.pass_rate * 100) + "%"
+        : "?";
+      const badgeClass = summary.pass_rate >= 0.8 ? "grade-pass" : summary.pass_rate >= 0.5 ? "" : "grade-fail";
+      html += '<div class="grades-summary">';
+      html += '<span class="grade-badge ' + badgeClass + '">' + passRate + '</span>';
+      html += '<span>' + (summary.passed || 0) + ' passed, ' + (summary.failed || 0) + ' failed of ' + (summary.total || 0) + '</span>';
+      html += '</div>';
+
+      // Assertions list
+      html += '<ul class="assertion-list">';
+      for (const exp of expectations) {
+        const statusClass = exp.passed ? "pass" : "fail";
+        const statusIcon = exp.passed ? "\u2713" : "\u2717";
+        html += '<li class="assertion-item">';
+        html += '<span class="assertion-status ' + statusClass + '">' + statusIcon + '</span>';
+        html += '<span>' + escapeHtml(exp.text) + '</span>';
+        if (exp.evidence) {
+          html += '<div class="assertion-evidence">' + escapeHtml(exp.evidence) + '</div>';
+        }
+        html += '</li>';
+      }
+      html += '</ul>';
+
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function toggleGrades() {
+      const content = document.getElementById("grades-content");
+      const arrow = document.getElementById("grades-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Previous outputs (collapsible) ----
+    function renderPrevOutputs(run) {
+      const section = document.getElementById("prev-outputs-section");
+      const content = document.getElementById("prev-outputs-content");
+      const prevOutputs = (EMBEDDED_DATA.previous_outputs || {})[run.id];
+
+      if (!prevOutputs || prevOutputs.length === 0) {
+        section.style.display = "none";
+        return;
+      }
+
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("prev-outputs-arrow").classList.remove("open");
+
+      // Render the files into the content area
+      content.innerHTML = "";
+      const wrapper = document.createElement("div");
+      wrapper.style.padding = "1rem";
+
+      for (const file of prevOutputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const fc = document.createElement("div");
+        fc.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          fc.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          fc.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          fc.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(fc, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          fc.appendChild(a);
+        }
+
+        fileDiv.appendChild(fc);
+        wrapper.appendChild(fileDiv);
+      }
+
+      content.appendChild(wrapper);
+    }
+
+    function togglePrevOutputs() {
+      const content = document.getElementById("prev-outputs-content");
+      const arrow = document.getElementById("prev-outputs-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Feedback (saved to server -> feedback.json) ----
+    function saveCurrentFeedback() {
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // Build reviews array from map
+      const reviews = [];
+      for (const [run_id, feedback] of Object.entries(feedbackMap)) {
+        if (feedback.trim()) {
+          reviews.push({ run_id, feedback, timestamp: new Date().toISOString() });
+        }
+      }
+
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviews, status: "in_progress" }),
+      }).then(() => {
+        document.getElementById("feedback-status").textContent = "Saved";
+      }).catch(() => {
+        // Static mode or server unavailable — no-op on auto-save,
+        // feedback will be downloaded on final submit
+        document.getElementById("feedback-status").textContent = "Will download on submit";
+      });
+    }
+
+    // ---- Done ----
+    function showDoneDialog() {
+      // Save current textarea to feedbackMap (but don't POST yet)
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // POST once with status: complete — include ALL runs so the model
+      // can distinguish "no feedback" (looks good) from "not reviewed"
+      const reviews = [];
+      const ts = new Date().toISOString();
+      for (const r of EMBEDDED_DATA.runs) {
+        reviews.push({ run_id: r.id, feedback: feedbackMap[r.id] || "", timestamp: ts });
+      }
+      const payload = JSON.stringify({ reviews, status: "complete" }, null, 2);
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      }).then(() => {
+        document.getElementById("done-overlay").classList.add("visible");
+      }).catch(() => {
+        // Server not available (static mode) — download as file
+        const blob = new Blob([payload], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "feedback.json";
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById("done-overlay").classList.add("visible");
+      });
+    }
+
+    function closeDoneDialog() {
+      // Reset status back to in_progress
+      saveCurrentFeedback();
+      document.getElementById("done-overlay").classList.remove("visible");
+    }
+
+    // ---- Toast ----
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      setTimeout(() => toast.classList.remove("visible"), 2000);
+    }
+
+    // ---- Keyboard nav ----
+    document.addEventListener("keydown", (e) => {
+      // Don't capture when typing in textarea
+      if (e.target.tagName === "TEXTAREA") return;
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        navigate(-1);
+      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        navigate(1);
+      }
+    });
+
+    // ---- Util ----
+    function getDownloadUri(file) {
+      if (file.data_uri) return file.data_uri;
+      if (file.data_b64) return "data:application/octet-stream;base64," + file.data_b64;
+      if (file.type === "text") return "data:text/plain;charset=utf-8," + encodeURIComponent(file.content);
+      return "#";
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ---- View switching ----
+    function switchView(view) {
+      document.querySelectorAll(".view-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+      document.querySelector(`[onclick="switchView('${view}')"]`).classList.add("active");
+      document.getElementById("panel-" + view).classList.add("active");
+    }
+
+    // ---- Benchmark rendering ----
+    function renderBenchmark() {
+      const data = EMBEDDED_DATA.benchmark;
+      if (!data) return;
+
+      // Show the tabs
+      document.getElementById("view-tabs").style.display = "flex";
+
+      const container = document.getElementById("benchmark-content");
+      const summary = data.run_summary || {};
+      const metadata = data.metadata || {};
+      const notes = data.notes || [];
+
+      let html = "";
+
+      // Header
+      html += "<h2 style='font-family: Poppins, sans-serif; margin-bottom: 0.5rem;'>Benchmark Results</h2>";
+      html += "<p style='color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;'>";
+      if (metadata.skill_name) html += "<strong>" + escapeHtml(metadata.skill_name) + "</strong> &mdash; ";
+      if (metadata.timestamp) html += metadata.timestamp + " &mdash; ";
+      if (metadata.evals_run) html += "Evals: " + metadata.evals_run.join(", ") + " &mdash; ";
+      html += (metadata.runs_per_configuration || "?") + " runs per configuration";
+      html += "</p>";
+
+      // Summary table
+      html += '<table class="benchmark-table">';
+
+      function fmtStat(stat, pct) {
+        if (!stat) return "—";
+        const suffix = pct ? "%" : "";
+        const m = pct ? (stat.mean * 100).toFixed(0) : stat.mean.toFixed(1);
+        const s = pct ? (stat.stddev * 100).toFixed(0) : stat.stddev.toFixed(1);
+        return m + suffix + " ± " + s + suffix;
+      }
+
+      function deltaClass(val) {
+        if (!val) return "";
+        const n = parseFloat(val);
+        if (n > 0) return "benchmark-delta-positive";
+        if (n < 0) return "benchmark-delta-negative";
+        return "";
+      }
+
+      // Discover config names dynamically (everything except "delta")
+      const configs = Object.keys(summary).filter(k => k !== "delta");
+      const configA = configs[0] || "config_a";
+      const configB = configs[1] || "config_b";
+      const labelA = configA.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const labelB = configB.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const a = summary[configA] || {};
+      const b = summary[configB] || {};
+      const delta = summary.delta || {};
+
+      html += "<thead><tr><th>Metric</th><th>" + escapeHtml(labelA) + "</th><th>" + escapeHtml(labelB) + "</th><th>Delta</th></tr></thead>";
+      html += "<tbody>";
+
+      html += "<tr><td><strong>Pass Rate</strong></td>";
+      html += "<td>" + fmtStat(a.pass_rate, true) + "</td>";
+      html += "<td>" + fmtStat(b.pass_rate, true) + "</td>";
+      html += '<td class="' + deltaClass(delta.pass_rate) + '">' + (delta.pass_rate || "—") + "</td></tr>";
+
+      // Time (only show row if data exists)
+      if (a.time_seconds || b.time_seconds) {
+        html += "<tr><td><strong>Time (s)</strong></td>";
+        html += "<td>" + fmtStat(a.time_seconds, false) + "</td>";
+        html += "<td>" + fmtStat(b.time_seconds, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.time_seconds) + '">' + (delta.time_seconds ? delta.time_seconds + "s" : "—") + "</td></tr>";
+      }
+
+      // Tokens (only show row if data exists)
+      if (a.tokens || b.tokens) {
+        html += "<tr><td><strong>Tokens</strong></td>";
+        html += "<td>" + fmtStat(a.tokens, false) + "</td>";
+        html += "<td>" + fmtStat(b.tokens, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.tokens) + '">' + (delta.tokens || "—") + "</td></tr>";
+      }
+
+      html += "</tbody></table>";
+
+      // Per-eval breakdown (if runs data available)
+      const runs = data.runs || [];
+      if (runs.length > 0) {
+        const evalIds = [...new Set(runs.map(r => r.eval_id))].sort((a, b) => a - b);
+
+        html += "<h3 style='font-family: Poppins, sans-serif; margin-bottom: 0.75rem;'>Per-Eval Breakdown</h3>";
+
+        const hasTime = runs.some(r => r.result && r.result.time_seconds != null);
+        const hasErrors = runs.some(r => r.result && r.result.errors > 0);
+
+        for (const evalId of evalIds) {
+          const evalRuns = runs.filter(r => r.eval_id === evalId);
+          const evalName = evalRuns[0] && evalRuns[0].eval_name ? evalRuns[0].eval_name : "Eval " + evalId;
+
+          html += "<h4 style='font-family: Poppins, sans-serif; margin: 1rem 0 0.5rem; color: var(--text);'>" + escapeHtml(evalName) + "</h4>";
+          html += '<table class="benchmark-table">';
+          html += "<thead><tr><th>Config</th><th>Run</th><th>Pass Rate</th>";
+          if (hasTime) html += "<th>Time (s)</th>";
+          if (hasErrors) html += "<th>Crashes During Execution</th>";
+          html += "</tr></thead>";
+          html += "<tbody>";
+
+          // Group by config and render with average rows
+          const configGroups = [...new Set(evalRuns.map(r => r.configuration))];
+          for (let ci = 0; ci < configGroups.length; ci++) {
+            const config = configGroups[ci];
+            const configRuns = evalRuns.filter(r => r.configuration === config);
+            if (configRuns.length === 0) continue;
+
+            const rowClass = ci === 0 ? "benchmark-row-with" : "benchmark-row-without";
+            const configLabel = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+            for (const run of configRuns) {
+              const r = run.result || {};
+              const prClass = r.pass_rate >= 0.8 ? "benchmark-delta-positive" : r.pass_rate < 0.5 ? "benchmark-delta-negative" : "";
+              html += '<tr class="' + rowClass + '">';
+              html += "<td>" + configLabel + "</td>";
+              html += "<td>" + run.run_number + "</td>";
+              html += '<td class="' + prClass + '">' + ((r.pass_rate || 0) * 100).toFixed(0) + "% (" + (r.passed || 0) + "/" + (r.total || 0) + ")</td>";
+              if (hasTime) html += "<td>" + (r.time_seconds != null ? r.time_seconds.toFixed(1) : "—") + "</td>";
+              if (hasErrors) html += "<td>" + (r.errors || 0) + "</td>";
+              html += "</tr>";
+            }
+
+            // Average row
+            const rates = configRuns.map(r => (r.result || {}).pass_rate || 0);
+            const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
+            const avgPrClass = avgRate >= 0.8 ? "benchmark-delta-positive" : avgRate < 0.5 ? "benchmark-delta-negative" : "";
+            html += '<tr class="benchmark-row-avg ' + rowClass + '">';
+            html += "<td>" + configLabel + "</td>";
+            html += "<td>Avg</td>";
+            html += '<td class="' + avgPrClass + '">' + (avgRate * 100).toFixed(0) + "%</td>";
+            if (hasTime) {
+              const times = configRuns.map(r => (r.result || {}).time_seconds).filter(t => t != null);
+              html += "<td>" + (times.length ? (times.reduce((a, b) => a + b, 0) / times.length).toFixed(1) : "—") + "</td>";
+            }
+            if (hasErrors) html += "<td></td>";
+            html += "</tr>";
+          }
+          html += "</tbody></table>";
+
+          // Per-assertion detail for this eval
+          const runsWithExpectations = {};
+          for (const config of configGroups) {
+            runsWithExpectations[config] = evalRuns.filter(r => r.configuration === config && r.expectations && r.expectations.length > 0);
+          }
+          const hasAnyExpectations = Object.values(runsWithExpectations).some(runs => runs.length > 0);
+          if (hasAnyExpectations) {
+            // Collect all unique assertion texts across all configs
+            const allAssertions = [];
+            const seen = new Set();
+            for (const config of configGroups) {
+              for (const run of runsWithExpectations[config]) {
+                for (const exp of (run.expectations || [])) {
+                  if (!seen.has(exp.text)) {
+                    seen.add(exp.text);
+                    allAssertions.push(exp.text);
+                  }
+                }
+              }
+            }
+
+            html += '<table class="benchmark-table" style="margin-top: 0.5rem;">';
+            html += "<thead><tr><th>Assertion</th>";
+            for (const config of configGroups) {
+              const label = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+              html += "<th>" + escapeHtml(label) + "</th>";
+            }
+            html += "</tr></thead><tbody>";
+
+            for (const assertionText of allAssertions) {
+              html += "<tr><td>" + escapeHtml(assertionText) + "</td>";
+
+              for (const config of configGroups) {
+                html += "<td>";
+                for (const run of runsWithExpectations[config]) {
+                  const exp = (run.expectations || []).find(e => e.text === assertionText);
+                  if (exp) {
+                    const cls = exp.passed ? "benchmark-delta-positive" : "benchmark-delta-negative";
+                    const icon = exp.passed ? "\u2713" : "\u2717";
+                    html += '<span class="' + cls + '" title="Run ' + run.run_number + ': ' + escapeHtml(exp.evidence || "") + '">' + icon + "</span> ";
+                  } else {
+                    html += "— ";
+                  }
+                }
+                html += "</td>";
+              }
+              html += "</tr>";
+            }
+            html += "</tbody></table>";
+          }
+        }
+      }
+
+      // Notes
+      if (notes.length > 0) {
+        html += '<div class="benchmark-notes">';
+        html += "<h3>Analysis Notes</h3>";
+        html += "<ul>";
+        for (const note of notes) {
+          html += "<li>" + escapeHtml(note) + "</li>";
+        }
+        html += "</ul></div>";
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ---- Start ----
+    init();
+    renderBenchmark();
+  </script>
+</body>
+</html>

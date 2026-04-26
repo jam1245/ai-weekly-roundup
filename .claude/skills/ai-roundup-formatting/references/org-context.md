@@ -35,9 +35,6 @@ Enterprise Performance & Transformation (EP&T) sponsors the AI CoP and this news
 ### AI Community of Practice (US-EPT-AI-Solutions-CoP)
 The 500+ practitioner community this newsletter serves. Spans RMS primarily, draws from all four BAs. The footer on every edition. The CoP exists to share AI best practices relevant to program management execution.
 
-### Genesis (AERO AI Platform)
-LM's internal AI platform, home of the AERO PM Knowledge Agent — trained on PM AeroCodes, F&BO AeroCodes, and process job aides. Reference when stories involve enterprise AI assistants, knowledge management, or domain-specific LLM deployment.
-
 ### OneLM
 LM's unified cultural framework spanning all four BAs. Three core behaviors: Collaborate to Win, Accelerate Change, Hear and Be Heard. Relevant when a story touches enterprise-wide AI rollout, change management, or the cultural and psychological dimensions of AI adoption at scale.
 
@@ -64,21 +61,18 @@ Core LM cultural concept — all employees take collective ownership for program
 | SGSG | Start Green Stay Green | Program posture guidance (CPS-070 Section 3.4) |
 | EVM / EVMS | Earned Value Management (System) | DoD contract compliance standard; DFARS-required |
 | IMS | Integrated Master Schedule | Core program planning artifact |
-| SRA | Schedule Risk Assessment | Required for RMS programs under Manage-3-019 |
-| OTB / OTS | Over Target Baseline / Over Target Schedule | Reprogramming process (Manage-3-024) |
 | F&BO | Finance & Business Operations | Financial analysis, EVM reporting, forecasting |
 | E&T | Engineering & Technology | Design, development, test |
 | S&BD | Strategy & Business Development | Growth strategy, new business capture |
 | LoB | Line of Business | |
 | EPP | Executive Planning Panel | Corporate/RMS proposal approval body |
-| RBA | Risk Based Assessment | Pre-review scoping by RMS leadership |
 | INAR | Independent Non-Advocate Review | Capture/proposal phase; required ≥$25M |
 | BR | Baseline Review | First major internal review post-award; within 90 days |
 | PAR | Program Assessment Review | Recurring; 6-month and annual cadences |
 | DAU | Defense Acquisition University | External resource: dau.edu |
 | DFARS | Defense Federal Acquisition Regulation Supplement | DoD contract compliance framework |
 | PMBOK | Project Management Body of Knowledge | PMI standard; pmi.org/standards |
-| Genesis | LM internal AI platform | AERO PM Knowledge Agent lives here |
+| Genesis | LM internal AI platform to build and share agents
 | AI Factory | LM's internal AI ecosystem | Scalable, secure, open-architecture |
 
 ---
@@ -101,18 +95,6 @@ Core LM cultural concept — all employees take collective ownership for program
 ## RMS Program Context
 
 RMS programs cover helicopters, radar, and C2 systems. Complex, long-lifecycle programs under heavy DoD acquisition regulation.
-
-**Key process framework:** The Manage-1-001 through Manage-3-024 command media series governs RMS program execution. Mandatory review milestones: RBA → INAR → BR → 6-Month PAR → Annual PAR.
-
-**Where AI intersects RMS workflows directly:**
-- Schedule analytics and SRA automation (Manage-3-019)
-- Risk and opportunity identification (Manage-2-005)
-- EVM reporting and variance analysis (Manage-3-007)
-- Proposal support and capture analytics (INAR process)
-- IMS generation and health monitoring (Manage-2-007)
-- Baseline reset / reprogramming analysis (Manage-3-024)
-
-**PM Gateway:** rms-pmgateway.global.lmco.com — central portal for RMS PM tools, training, and resources.
 
 ---
 
